@@ -1,0 +1,257 @@
+#R version 4.2.1
+#Load NSQIP data (available with approval through ACS https://www.facs.org/quality-programs/data-and-registries/acs-nsqip/participant-use-data-file/)
+library(readr)
+data <- read_csv("data.csv")
+
+#Split data into train (70%) and test (30%) sets
+library(caTools)
+set.seed(123)
+sample <- sample.split(data$MACE, SplitRatio = 0.7)
+train <- subset(data, sample == TRUE)
+test <- subset(data, sample == FALSE)
+
+#Apply Random Over-Sample Examples (ROSE) for class balance on training set
+library(ROSE)
+train <- ROSE(MACE ~ ., data = train, N = 10000, seed = 123)$data
+
+#Define predictors
+library(dplyr)
+predictors_train <- train %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+predictors_test <- test %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+
+#Train pre-op models
+library(caret)
+library(xgboost)
+library(ranger)
+library(naivebayes)
+library(e1071)
+library(nnet)
+train_control <- trainControl(method = "cv", number = 10) #10-fold cross-validation
+
+#Train XGBoost
+XGBgrid <- expand.grid(max_depth = c(2,3,4,5,6,7,8,9), nrounds = (1:10)*50, eta = c(0.4,0.3,0.2,0.1,0.05,0.01,0.001), gamma = c(0,0.1,1,1.5,2), subsample = c(0.5,0.6,0.7,0.8,0.9,1), min_child_weight = c(1,3,5,7,10), colsample_bytree = c(0.5,0.6,0.7,0.8,0.9,1) #XGBoost grid search for hyperparameters
+XGB <- train(x = as.matrix(predictors_train), y = train$MACE, data = train, method = "xgbTree", metric = "ROC", trControl = train_control, tuneGrid = XGBgrid)
+
+#Train random forest
+RFgrid <- expand.grid(mtry = 2:4, splitrule = "gini", min.node.size = c(10,20))
+RF <- train(x = predictors_train, y = train$MACE, data = train, method = "ranger", metric = "ROC", trControl = train_control, tuneGrid = RFgrid)
+
+#Train naive bayes
+NBgrid <- expand.grid(usekernel = c(TRUE, FALSE), fL = 0:5, adjust = seq(0,5,by=1))
+NB <- train(x = predictors_train, y = as.factor(train$MACE), data = train, method = "naive_bayes", metric = "ROC", trControl = train_control, tuneGrid = NBgrid)
+
+#Train support vector machine
+SVMgrid <- expand.grid(C = c(0.01, 0.1))
+SVM <- train(x = predictors_train, y = train$MACE, data = train, method = "svmRadial", metric = "ROC", trControl = train_control, tuneGrid = SVMgrid)
+
+#Train artificial neural network
+NNETgrid <- expand.grid(size = seq(1,10,by=1), decay = seq(0.1,0.5,by=0.1))
+NNET <- train(x = predictors_train, y = train$MACE, data = train, method = "nnet", metric = "ROC", trControl = train_control, tuneGrid = NNETgrid)
+
+#Train logistic regression
+LRgrid <- expand.grid(parameter = c(0.001, 0.001, 0.1, 1, 10, 100, 1000))
+LR <- train(x = predictors_train, y = train$MACE, data = train, method = "glm", metric = "ROC", trControl = train_control, tuneGrid = LRgrid)
+
+#Evaluate models on test set
+library(pROC)
+
+XGB_pred <- predict(XGB, as.matrix(predictors_test))
+auc(test$MACE, XGB_pred)
+ci.auc(test$MACE, XGB_pred)
+XGB_pred_0.5 <- ifelse(XGB_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$MACE), as.factor(XGB_pred_0.5))
+
+RF_pred <- predict(RF, predictors_test)
+auc(test$MACE, RF_pred)
+ci.auc(test$MACE, RF_pred)
+RF_pred_0.5 <- ifelse(RF_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$MACE), as.factor(RF_pred_0.5))
+
+NB_pred <- predict(NB, predictors_test)
+auc(test$MACE, NB_pred)
+ci.auc(test$MACE, NB_pred)
+NB_pred_0.5 <- ifelse(NB_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$MACE), as.factor(NB_pred_0.5))
+
+SVM_pred <- predict(SVM, predictors_test)
+auc(test$MACE, SVM_pred)
+ci.auc(test$MACE, SVM_pred)
+SVM_pred_0.5 <- ifelse(SVM_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$MACE), as.factor(SVM_pred_0.5))
+
+NNET_pred <- predict(NNET, predictors_test)
+auc(test$MACE, NNET_pred)
+ci.auc(test$MACE, NNET_pred)
+NNET_pred_0.5 <- ifelse(NNET_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$MACE), as.factor(NNET_pred_0.5))
+
+LR_pred <- predict(LR, predictors_test)
+auc(test$MACE, LR_pred)
+ci.auc(test$MACE, LR_pred)
+LR_pred_0.5 <- ifelse(LR_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$MACE), as.factor(LR_pred_0.5))
+
+#XGBoost selected as best performing model
+
+#Generate ROC curves
+library(ROCR)
+XGB_perf <- prediction(XGB_pred, test$MACE)
+XGB_perf <- performance(XGB_perf, "tpr", "fpr")
+plot(XGB_perf)
+abline(a=0,b=1)
+
+#Generate calibration plot
+library(gbm)
+calibrate.plot(test$MACE, XGB_pred)
+
+#Calculate Brier Score
+library(DescTools)
+BrierScore(XGB_pred, test$MACE)
+
+#Calculate variable importance scores for top 10 predictors
+importance_matrix <- xgb.importance(names(predictors_test), model = XGB)
+xgb.plot.importance(importance_matrix, top_n = 10)
+
+#Subgroup analysis based on age
+test_under70 <- test[test$Age<70, ]
+test_over70 <- test[test$Age>70, ]
+predictors_test_under70 <- test_under70 %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+predictors_test_over70 <- test_over70 %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+
+pred_under70 <- predict(XGB, as.matrix(predictors_test_under70))
+auc(test_under70$MACE, pred_under70)
+ci.auc(test_under70$MACE, pred_under70)
+
+pred_over70 <- predict(XGB, as.matrix(predictors_test_over70))
+auc(test_under70$MACE, pred_over70)
+ci.auc(test_under70$MACE, pred_over70)
+
+perf_under70 <- prediction(pred_under70, test_under70$MACE)
+perf_under70 <- performance(perf_under70, "tpr", "fpr")
+
+perf_over70 <- prediction(pred_over70, test_over70$MACE)
+perf_over70 <- performance(perf_over70, "tpr", "fpr")
+
+plot(perf_under70)
+plot(perf_over70, add = TRUE, col = 'blue')
+abline(a=0,b=1)
+
+#Subgroup analysis based on sex
+test_male <- test[test$SEX=1, ]
+test_female <- test[test$SEX=2, ]
+predictors_test_male <- test_male %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+predictors_test_female <- test_female %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+
+pred_male <- predict(XGB, as.matrix(predictors_test_male))
+auc(test_male$MACE, pred_male)
+ci.auc(test_male$MACE, pred_male)
+
+pred_female <- predict(XGB, as.matrix(predictors_test_female))
+auc(test_female$MACE, pred_female)
+ci.auc(test_female$MACE, pred_female)
+
+perf_male <- prediction(pred_male, test_male$MACE)
+perf_male <- performance(perf_male, "tpr", "fpr")
+
+perf_female <- prediction(pred_female, test_female$MACE)
+perf_female <- performance(perf_female, "tpr", "fpr")
+
+plot(perf_male)
+plot(perf_female, add = TRUE, col = 'blue')
+abline(a=0,b=1)
+
+#Subgroup analysis based on race
+test_white <- test[test$RACE_NEW=1, ]
+test_nonwhite <- test[test$RACE_NEW!=1, ]
+predictors_test_white <- test_white %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+predictors_test_nonwhite <- test_nonwhite %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+
+pred_white <- predict(XGB, as.matrix(predictors_test_white))
+auc(test_white$MACE, pred_white)
+ci.auc(test_white$MACE, pred_white)
+
+pred_nonwhite <- predict(XGB, as.matrix(predictors_test_nonwhite))
+auc(test_nonwhite$MACE, pred_nonwhite)
+ci.auc(test_nonwhite$MACE, pred_nonwhite)
+
+perf_white <- prediction(pred_white, test_white$MACE)
+perf_white <- performance(perf_white, "tpr", "fpr")
+
+perf_nonwhite <- prediction(pred_nonwhite, test_nonwhite$MACE)
+perf_nonwhite <- performance(perf_nonwhite, "tpr", "fpr")
+
+plot(perf_white)
+plot(perf_nonwhite, add = TRUE, col = 'blue')
+abline(a=0,b=1)
+
+#Subgroup analysis based on ethnicity
+test_hispanic <- test[test$ETHNICITY_HISPANIC=1, ]
+test_nonhispanic <- test[test$ETHNICITY_HISPANIC=0, ]
+predictors_test_hispanic <- test_hispanic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+predictors_test_nonhispanic <- test_nonhispanic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+
+pred_hispanic <- predict(XGB, as.matrix(predictors_test_hispanic))
+auc(test_hispanic$MACE, pred_hispanic)
+ci.auc(test_hispanic$MACE, pred_hispanic)
+
+pred_nonhispanic <- predict(XGB, as.matrix(predictors_test_nonhispanic))
+auc(test_nonhispanic$MACE, pred_nonhispanic)
+ci.auc(test_nonhispanic$MACE, pred_nonhispanic)
+
+perf_hispanic <- prediction(pred_hispanic, test_hispanic$MACE)
+perf_hispanic <- performance(perf_hispanic, "tpr", "fpr")
+
+perf_nonhispanic <- prediction(pred_nonhispanic, test_nonhispanic$MACE)
+perf_nonhispanic <- performance(perf_nonhispanic, "tpr", "fpr")
+
+plot(perf_hispanic)
+plot(perf_nonhispanic, add = TRUE, col = 'blue')
+abline(a=0,b=1)
+
+#Subgroup analysis based on symptom status
+test_symptomatic <- test[test$SYMPTOMATIC=1, ]
+test_asymptomatic <- test[test$SYMPTOMATIC=0, ]
+predictors_test_symptomatic <- test_symptomatic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+predictors_test_asymptomatic <- test_asymptomatic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+
+pred_symptomatic <- predict(XGB, as.matrix(predictors_test_symptomatic))
+auc(test_symptomatic$MACE, pred_symptomatic)
+ci.auc(test_symptomatic$MACE, pred_symptomatic)
+
+pred_asymptomatic <- predict(XGB, as.matrix(predictors_test_asymptomatic))
+auc(test_asymptomatic$MACE, pred_asymptomatic)
+ci.auc(test_asymptomatic$MACE, pred_asymptomatic)
+
+perf_symptomatic <- prediction(pred_symptomatic, test_symptomatic$MACE)
+perf_symptomatic <- performance(perf_symptomatic, "tpr", "fpr")
+
+perf_asymptomatic <- prediction(pred_asymptomatic, test_asymptomatic$MACE)
+perf_asymptomatic <- performance(perf_asymptomatic, "tpr", "fpr")
+
+plot(perf_symptomatic)
+plot(perf_asymptomatic, add = TRUE, col = 'blue')
+abline(a=0,b=1)
+
+#Subgroup analysis based on urgency of surgery
+test_urgent <- test[test$CASETYPE!=1, ]
+test_elective <- test[test$CASETYPE=1, ]
+predictors_test_urgent <- test_urgent %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+predictors_test_elective <- test_elective %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+
+pred_urgent <- predict(XGB, as.matrix(predictors_test_urgent))
+auc(test_urgent$MACE, pred_urgent)
+ci.auc(test_urgent$MACE, pred_urgent)
+
+pred_elective <- predict(XGB, as.matrix(predictors_test_elective))
+auc(test_elective$MACE, pred_elective)
+ci.auc(test_elective$MACE, pred_elective)
+
+perf_urgent <- prediction(pred_urgent, test_urgent$MACE)
+perf_urgent <- performance(perf_urgent, "tpr", "fpr")
+
+perf_elective <- prediction(pred_elective, test_elective$MACE)
+perf_elective <- performance(perf_elective, "tpr", "fpr")
+
+plot(perf_urgent)
+plot(perf_elective, add = TRUE, col = 'blue')
+abline(a=0,b=1)
