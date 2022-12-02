@@ -255,3 +255,33 @@ perf_elective <- performance(perf_elective, "tpr", "fpr")
 plot(perf_urgent)
 plot(perf_elective, add = TRUE, col = 'blue')
 abline(a=0,b=1)
+
+#Train and evaluate XGBoost for predicting secondary outcomes
+
+XGB_other_carotid_outcomes <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$OTHER_CEA_OUTCOMES), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1) #hyperparameters chosen based on above grid search and cross validation
+XGB_other_carotid_outcomes_pred <- predict(XGB_other_carotid_outcomes, as.matrix(predictors_test))
+auc(test$OTHER_CEA_OUTCOMES, XGB_other_carotid_outcomes_pred)
+ci.auc(test$OTHER_CEA_OUTCOMES, XGB_other_carotid_outcomes_pred)
+XGB_other_carotid_outcomes_pred_0.5 <- ifelse(XGB_other_carotid_outcomes_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$OTHER_CEA_OUTCOMES), as.factor(XGB_other_carotid_outcomes_pred_0.5))
+
+XGB_other_outcomes <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$OTHER_OUTCOMES), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1)
+XGB_other_outcomes_pred <- predict(XGB_other_outcomes, as.matrix(predictors_test))
+auc(test$OTHER_OUTCOMES, XGB_other_outcomes_pred)
+ci.auc(test$OTHER_OUTCOMES, XGB_other_outcomes_pred)
+XGB_other_outcomes_pred_0.5 <- ifelse(XGB_other_outcomes_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$OTHER_OUTCOMES), as.factor(XGB_other_outcomes_pred_0.5))
+
+XGB_non_home_dc <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$non_home_dc), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1)
+XGB_non_home_dc_pred <- predict(XGB_non_home_dc, as.matrix(predictors_test))
+auc(test$non_home_dc, XGB_non_home_dc_pred)
+ci.auc(test$non_home_dc, XGB_non_home_dc_pred)
+XGB_non_home_dc_pred_0.5 <- ifelse(XGB_non_home_dc_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$non_home_dc), as.factor(XGB_non_home_dc_pred_0.5))
+
+XGB_unplanned_readmission <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$unplanned_readmission), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1)
+XGB_unplanned_readmission_pred <- predict(XGB_unplanned_readmission, as.matrix(predictors_test))
+auc(test$unplanned_readmission, XGB_unplanned_readmission_pred)
+ci.auc(test$unplanned_readmission, XGB_unplanned_readmission_pred)
+XGB_unplanned_readmission_pred_0.5 <- ifelse(XGB_unplanned_readmission_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$unplanned_readmission), as.factor(XGB_unplanned_readmission_pred_0.5))
