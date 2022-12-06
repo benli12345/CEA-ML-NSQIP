@@ -258,7 +258,28 @@ abline(a=0,b=1)
 
 #Train and evaluate XGBoost for predicting secondary outcomes
 
-XGB_other_carotid_outcomes <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$OTHER_CEA_OUTCOMES), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1) #hyperparameters chosen based on above grid search and cross validation
+XGB_stroke <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$stroke), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1) #hyperparameters chosen based on above grid search and cross validation
+XGB_stroke_pred <- predict(XGB_stroke, as.matrix(predictors_test))
+auc(test$stroke, XGB_stroke_pred)
+ci.auc(test$stroke, XGB_stroke_pred)
+XGB_stroke_pred_0.5 <- ifelse(XGB_stroke_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$stroke), as.factor(XGB_stroke_pred_0.5))
+
+XGB_MI <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$MI), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1)
+XGB_MI_pred <- predict(XGB_MI, as.matrix(predictors_test))
+auc(test$MI, XGB_MI_pred)
+ci.auc(test$MI, XGB_MI_pred)
+XGB_MI_pred_0.5 <- ifelse(XGB_MI_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$MI), as.factor(XGB_MI_pred_0.5))
+
+XGB_death <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$death), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1)
+XGB_death_pred <- predict(XGB_death, as.matrix(predictors_test))
+auc(test$death, XGB_death_pred)
+ci.auc(test$death, XGB_death_pred)
+XGB_death_pred_0.5 <- ifelse(XGB_death_pred > 0.5,1,0)
+confusionMatrix(as.factor(test$death), as.factor(XGB_death_pred_0.5))
+
+XGB_other_carotid_outcomes <- xgboost(data = as.matrix(predictors_train), label = as.numeric(train$OTHER_CEA_OUTCOMES), nrounds = 150, verbose = TRUE, objective = 'binary:logistic', eval_metric = 'auc', max_depth = 3, eta = 0.3, gamma = 0, colsample_bytree = 0.6, min_child_weight = 1, subsample = 1)
 XGB_other_carotid_outcomes_pred <- predict(XGB_other_carotid_outcomes, as.matrix(predictors_test))
 auc(test$OTHER_CEA_OUTCOMES, XGB_other_carotid_outcomes_pred)
 ci.auc(test$OTHER_CEA_OUTCOMES, XGB_other_carotid_outcomes_pred)
