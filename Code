@@ -112,6 +112,18 @@ BrierScore(XGB_pred, test$MACE)
 importance_matrix <- xgb.importance(names(predictors_test), model = XGB)
 xgb.plot.importance(importance_matrix, top_n = 10)
 
+#Subgroup analysis of variable importance scores for top 10 predictors based on symptom status
+
+test_asymptomatic <- test[test$SYMPTOMATIC=0, ]
+predictors_test_asymptomatic <- test_asymptomatic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+importance_matrix <- xgb.importance(names(predictors_test_asymptomatic), model = XGB)
+xgb.plot.importance(importance_matrix, top_n = 10)
+
+test_symptomatic <- test[test$SYMPTOMATIC=1, ]
+predictors_test_symptomatic <- test_symptomatic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
+importance_matrix <- xgb.importance(names(predictors_test_symptomatic), model = XGB)
+xgb.plot.importance(importance_matrix, top_n = 10)
+
 #Subgroup analysis based on age
 test_under70 <- test[test$Age<70, ]
 test_over70 <- test[test$Age>70, ]
