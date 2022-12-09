@@ -62,9 +62,9 @@ XGB_pred_0.5 <- ifelse(XGB_pred > 0.5,1,0)
 confusionMatrix(as.factor(test$MACE), as.factor(XGB_pred_0.5))
 
 RF_pred <- predict(RF, predictors_test)
-auc(test$MACE, RF_pred)
-ci.auc(test$MACE, RF_pred)
-RF_pred_0.5 <- ifelse(RF_pred > 0.5,1,0)
+auc(test$MACE, RF_pred$predictions)
+ci.auc(test$MACE, RF_pred$predictions)
+RF_pred_0.5 <- ifelse(RF_pred$predictions > 0.5,1,0)
 confusionMatrix(as.factor(test$MACE), as.factor(RF_pred_0.5))
 
 NB_pred <- predict(NB, predictors_test)
