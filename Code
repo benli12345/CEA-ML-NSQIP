@@ -135,8 +135,8 @@ auc(test_under70$MACE, pred_under70)
 ci.auc(test_under70$MACE, pred_under70)
 
 pred_over70 <- predict(XGB, as.matrix(predictors_test_over70))
-auc(test_under70$MACE, pred_over70)
-ci.auc(test_under70$MACE, pred_over70)
+auc(test_over70$MACE, pred_over70)
+ci.auc(test_over70$MACE, pred_over70)
 
 perf_under70 <- prediction(pred_under70, test_under70$MACE)
 perf_under70 <- performance(perf_under70, "tpr", "fpr")
