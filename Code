@@ -114,12 +114,12 @@ xgb.plot.importance(importance_matrix, top_n = 10)
 
 #Subgroup analysis of variable importance scores for top 10 predictors based on symptom status
 
-test_asymptomatic <- test[test$SYMPTOMATIC=0, ]
+test_asymptomatic <- test[test$SYMPTOMATIC==0, ]
 predictors_test_asymptomatic <- test_asymptomatic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 importance_matrix <- xgb.importance(names(predictors_test_asymptomatic), model = XGB)
 xgb.plot.importance(importance_matrix, top_n = 10)
 
-test_symptomatic <- test[test$SYMPTOMATIC=1, ]
+test_symptomatic <- test[test$SYMPTOMATIC==1, ]
 predictors_test_symptomatic <- test_symptomatic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 importance_matrix <- xgb.importance(names(predictors_test_symptomatic), model = XGB)
 xgb.plot.importance(importance_matrix, top_n = 10)
@@ -149,7 +149,7 @@ plot(perf_over70, add = TRUE, col = 'blue')
 abline(a=0,b=1)
 
 #Subgroup analysis based on sex
-test_male <- test[test$SEX=1, ]
+test_male <- test[test$SEX==1, ]
 test_female <- test[test$SEX=2, ]
 predictors_test_male <- test_male %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 predictors_test_female <- test_female %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
@@ -173,7 +173,7 @@ plot(perf_female, add = TRUE, col = 'blue')
 abline(a=0,b=1)
 
 #Subgroup analysis based on race
-test_white <- test[test$RACE_NEW=1, ]
+test_white <- test[test$RACE_NEW==1, ]
 test_nonwhite <- test[test$RACE_NEW!=1, ]
 predictors_test_white <- test_white %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 predictors_test_nonwhite <- test_nonwhite %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
@@ -197,8 +197,8 @@ plot(perf_nonwhite, add = TRUE, col = 'blue')
 abline(a=0,b=1)
 
 #Subgroup analysis based on ethnicity
-test_hispanic <- test[test$ETHNICITY_HISPANIC=1, ]
-test_nonhispanic <- test[test$ETHNICITY_HISPANIC=0, ]
+test_hispanic <- test[test$ETHNICITY_HISPANIC==1, ]
+test_nonhispanic <- test[test$ETHNICITY_HISPANIC==0, ]
 predictors_test_hispanic <- test_hispanic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 predictors_test_nonhispanic <- test_nonhispanic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 
@@ -221,8 +221,8 @@ plot(perf_nonhispanic, add = TRUE, col = 'blue')
 abline(a=0,b=1)
 
 #Subgroup analysis based on symptom status
-test_symptomatic <- test[test$SYMPTOMATIC=1, ]
-test_asymptomatic <- test[test$SYMPTOMATIC=0, ]
+test_symptomatic <- test[test$SYMPTOMATIC==1, ]
+test_asymptomatic <- test[test$SYMPTOMATIC==0, ]
 predictors_test_symptomatic <- test_symptomatic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 predictors_test_asymptomatic <- test_asymptomatic %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 
@@ -246,7 +246,7 @@ abline(a=0,b=1)
 
 #Subgroup analysis based on urgency of surgery
 test_urgent <- test[test$CASETYPE!=1, ]
-test_elective <- test[test$CASETYPE=1, ]
+test_elective <- test[test$CASETYPE==1, ]
 predictors_test_urgent <- test_urgent %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 predictors_test_elective <- test_elective %>% select(AdmQtr, OperYR, Age, SEX, BMI, RACE_NEW, ETHNICITY_HISPANIC, HYPERMED, DIABETES, SMOKE_CURRENT, HXCHF, HXCOPD, DIALYSIS, FNSTATUS2, PHYSHIGHRISK, ASPIRIN, STATIN, BETAB, PRSODM_mmolL, PRBUN_mmolL, PRCREAT_umolL, PRALBUM_gL, PRWBC_Kmm3, PRHCT_LL, PRPLATE_Kcumm, PRINR, PRPTT_s, IPSI_STENOSIS, CONTRA_STENOSIS, ANATHIGHRISK, SYMPTOMATIC, CASETYPE, TRANSFER, REVISION_CEA, ASACLAS, SURGSPEC)
 
