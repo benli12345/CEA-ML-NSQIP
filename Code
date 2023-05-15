@@ -45,7 +45,7 @@ SVMgrid <- expand.grid(C = c(0.001, 0.01, 0.1, 1, 10, 100, 10000))
 SVM <- train(x = predictors_train, y = train$MACE, data = train, method = "svmRadial", metric = "ROC", trControl = train_control, tuneGrid = SVMgrid)
 
 #Train artificial neural network
-NNETgrid <- expand.grid(size = seq(1,10,by=1), decay = seq(0.1,0.5,by=0.1))
+NNETgrid <- expand.grid(size = seq(10,50,by=10), decay = seq(0.1,0.5,by=0.1))
 NNET <- train(x = predictors_train, y = train$MACE, data = train, method = "nnet", metric = "ROC", trControl = train_control, tuneGrid = NNETgrid)
 
 #Train logistic regression
